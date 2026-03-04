@@ -22,6 +22,15 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const OAuthCallback = () => {
+  // This route handles the /~oauth callback; the lovable SDK processes tokens automatically
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -31,6 +40,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/~oauth" element={<OAuthCallback />} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/submit" element={<ProtectedRoute><SubmitHealth /></ProtectedRoute>} />
             <Route path="/explore" element={<ProtectedRoute><ExploreData /></ProtectedRoute>} />
