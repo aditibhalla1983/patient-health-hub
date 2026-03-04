@@ -3,6 +3,8 @@ import { CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import PageHeader from "@/components/PageHeader";
 import MobileNav from "@/components/MobileNav";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const conditionOptions = [
   "Migraine", "Lupus", "Arthritis", "Diabetes", "Asthma",
@@ -11,6 +13,8 @@ const conditionOptions = [
 
 const SubmitHealth = () => {
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
   const [form, setForm] = useState({
     age: "",
     gender: "",
@@ -26,14 +30,35 @@ const SubmitHealth = () => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.age || !form.condition || !form.symptoms) {
       toast.error("Please fill in required fields");
       return;
     }
-    setSubmitted(true);
-    toast.success("Health information submitted successfully!");
+    if (!user) {
+      toast.error("You must be logged in");
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.from("health_submissions").insert({
+      user_id: user.id,
+      age: parseInt(form.age),
+      condition: form.condition as any,
+      symptoms: form.symptoms,
+      gender: form.gender ? (form.gender as any) : null,
+      duration: form.duration || null,
+      medications: form.medications || null,
+      triggers: form.triggers || null,
+      notes: form.notes || null,
+    });
+    setLoading(false);
+    if (error) {
+      toast.error("Failed to submit: " + error.message);
+    } else {
+      setSubmitted(true);
+      toast.success("Health information submitted successfully!");
+    }
   };
 
   if (submitted) {
@@ -189,9 +214,10 @@ const SubmitHealth = () => {
 
         <button
           type="submit"
-          className="w-full py-3.5 rounded-2xl gradient-primary text-primary-foreground font-semibold text-sm active:scale-[0.98] transition-transform mt-2"
+          disabled={loading}
+          className="w-full py-3.5 rounded-2xl gradient-primary text-primary-foreground font-semibold text-sm active:scale-[0.98] transition-transform mt-2 disabled:opacity-60"
         >
-          Submit to Human Health Project
+          {loading ? "Submitting..." : "Submit to Human Health Project"}
         </button>
 
         <p className="text-[10px] text-muted-foreground text-center pb-4">
